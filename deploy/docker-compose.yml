@@ -1,0 +1,75 @@
+#https://www.dev-notes.ru/articles/devops/dockerize-a-laravel-11-app/#environment_variable_configuration
+
+services:
+  laravel:
+    restart: unless-stopped
+    container_name: laravelapp
+    build:
+      context: ../
+      dockerfile: ./deploy/Dockerfile
+    volumes:
+#      - ../storage/app:/var/www/html/storage/app
+#      - ../storage/logs:/var/www/html/storage/logs
+      - ../:/var/www/html
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_KEY: ${APP_KEY}
+      APP_VERSION: ${APP_VERSION}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MAIL_MAILER: ${MAIL_MAILER}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+    ports:
+      - "8080:80"
+    networks:
+      - n-laravel
+    depends_on:
+      - database
+
+  database:
+      image: postgres:16
+      container_name: database
+      restart: unless-stopped
+      healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U postgres"]
+          interval: 5s
+          timeout: 5s
+          retries: 5
+      environment:
+          POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD}
+      volumes:
+          - v-database:/var/lib/postgresql/data
+          - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      networks:
+          - n-laravel
+
+  adminer:
+      image: adminer:latest
+      ports:
+          - "8081:8080"
+      environment:
+          ADMINER_USERNAME: admin
+          ADMINER_PASSWORD: passw
+      networks:
+          - n-laravel
+
+volumes:
+  v-database:
+
+
+networks:
+  n-laravel:
+    driver: bridge
