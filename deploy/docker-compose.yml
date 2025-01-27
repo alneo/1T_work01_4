@@ -1,5 +1,3 @@
-#https://www.dev-notes.ru/articles/devops/dockerize-a-laravel-11-app/#environment_variable_configuration
-
 services:
   laravel:
     restart: unless-stopped
